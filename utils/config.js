@@ -24,6 +24,7 @@ const BAD_REQUEST_ERROR = 'Переданы некорректные данны�
 const NOT_VALID_ID_ERROR = 'NotValidId';
 const UNAUTH_ERROR = 'Неправильные почта или пароль.';
 const CONFLICT_DUPLICATE_ERROR = 'Этот email уже зарегистрирован.';
+const FORBIDDEN_ERROR = 'У вас недостаточно доступа для этого действия.';
 const VALIDATION_URL_ERROR = 'Передана некорректная ссылка.';
 const VALIDATION_EMAIL_ERROR = 'Указан некорректный email.';
 
@@ -34,6 +35,9 @@ const TOKEN_KEY = 'token';
 const JWT_SECRET = process.env.JWT_SECRET || 'super-strong-secret';
 const PORT = process.env.PORT || 3000;
 const MONGO_DB = process.env.MONGO_DB || 'mongodb://127.0.0.1:27017/mestodb';
+
+// регулярки
+const REG_EXP_FOR_URL_VALIDATION = /(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})/;
 
 module.exports = {
   STATUS_SUCCESS_CREATED,
@@ -49,9 +53,11 @@ module.exports = {
   VALIDATION_URL_ERROR,
   VALIDATION_EMAIL_ERROR,
   CONFLICT_DUPLICATE_CODE,
+  FORBIDDEN_ERROR,
   TOKEN_KEY,
   LIMITER_CONFIG,
   JWT_SECRET,
   PORT,
   MONGO_DB,
+  REG_EXP_FOR_URL_VALIDATION,
 };

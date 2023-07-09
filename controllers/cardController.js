@@ -1,89 +1,72 @@
-const { CastError, ValidationError } = require('mongoose').Error;
+const { ValidationError } = require('mongoose').Error;
+const BadRequest = require('../errors/BadRequest');
+const Forbidden = require('../errors/Forbidden');
+const NotFound = require('../errors/NotFound');
 const Card = require('../models/cardSchema');
 const {
   STATUS_SUCCESS_CREATED,
-  STATUS_BAD_REQUEST,
   BAD_REQUEST_ERROR,
-  STATUS_INTERNAL_SERVER_ERROR,
-  SERVER_ERROR,
   NOT_VALID_ID_ERROR,
-  STATUS_NOT_FOUND,
-  NOT_FOUND_ERROR,
+  FORBIDDEN_ERROR,
 } = require('../utils/config');
 
-function createCard(req, res) {
+function createCard(req, res, next) {
   const { name, link } = req.body;
 
   Card.create({ name, link, owner: req.user._id })
     .then((card) => res.status(STATUS_SUCCESS_CREATED).send({ data: card }))
     .catch((err) => {
       if (err instanceof ValidationError) {
-        res.status(STATUS_BAD_REQUEST).send({ message: BAD_REQUEST_ERROR + err.message });
+        next(new BadRequest(BAD_REQUEST_ERROR));
       } else {
-        res.status(STATUS_INTERNAL_SERVER_ERROR).send({ message: SERVER_ERROR + err.message });
+        next(err);
       }
     });
 }
 
-function getCards(req, res) {
+function getCards(req, res, next) {
   Card.find({})
     .then((cards) => res.send({ data: cards }))
-    .catch((err) => {
-      res.status(STATUS_INTERNAL_SERVER_ERROR).send({ message: SERVER_ERROR + err.message });
-    });
+    .catch(next);
 }
 
-function deleteCardById(req, res) {
-  Card.findByIdAndRemove(req.params.cardId)
-    .orFail(new Error(NOT_VALID_ID_ERROR))
-    .then((card) => res.send({ data: card }))
-    .catch((err) => {
-      if (err.message === NOT_VALID_ID_ERROR) {
-        res.status(STATUS_NOT_FOUND).send({ message: NOT_FOUND_ERROR });
-      } else if (err instanceof CastError) {
-        res.status(STATUS_BAD_REQUEST).send({ message: BAD_REQUEST_ERROR + err.message });
-      } else {
-        res.status(STATUS_INTERNAL_SERVER_ERROR).send({ message: SERVER_ERROR + err.message });
+function deleteCardById(req, res, next) {
+  const { cardId } = req.params;
+  const currentUserId = req.user._id;
+
+  Card.findById({ cardId })
+    .orFail(new NotFound(NOT_VALID_ID_ERROR))
+    .then((card) => {
+      if (!card.owner.equals(currentUserId)) {
+        return next(new Forbidden(FORBIDDEN_ERROR));
       }
-    });
+      return Card
+        .deleteOne(card)
+        .then(() => res.send({ data: card }));
+    })
+    .catch(next);
 }
 
-function likeCard(req, res) {
+function likeCard(req, res, next) {
   Card.findByIdAndUpdate(
     req.params.cardId,
     { $addToSet: { likes: req.user._id } }, // добавить _id в массив, если его там нет
     { new: true },
   )
-    .orFail(new Error(NOT_VALID_ID_ERROR))
+    .orFail(new NotFound(NOT_VALID_ID_ERROR))
     .then((card) => res.send({ data: card }))
-    .catch((err) => {
-      if (err.message === NOT_VALID_ID_ERROR) {
-        res.status(STATUS_NOT_FOUND).send({ message: NOT_FOUND_ERROR });
-      } else if (err instanceof CastError) {
-        res.status(STATUS_BAD_REQUEST).send({ message: BAD_REQUEST_ERROR + err.message });
-      } else {
-        res.status(STATUS_INTERNAL_SERVER_ERROR).send({ message: SERVER_ERROR + err.message });
-      }
-    });
+    .catch(next);
 }
 
-function dislikeCard(req, res) {
+function dislikeCard(req, res, next) {
   Card.findByIdAndUpdate(
     req.params.cardId,
     { $pull: { likes: req.user._id } }, // убрать _id из массива
     { new: true },
   )
-    .orFail(new Error(NOT_VALID_ID_ERROR))
+    .orFail(new NotFound(NOT_VALID_ID_ERROR))
     .then((card) => res.send({ data: card }))
-    .catch((err) => {
-      if (err.message === NOT_VALID_ID_ERROR) {
-        res.status(STATUS_NOT_FOUND).send({ message: NOT_FOUND_ERROR });
-      } else if (err instanceof CastError) {
-        res.status(STATUS_BAD_REQUEST).send({ message: BAD_REQUEST_ERROR + err.message });
-      } else {
-        res.status(STATUS_INTERNAL_SERVER_ERROR).send({ message: SERVER_ERROR + err.message });
-      }
-    });
+    .catch(next);
 }
 
 module.exports = {
