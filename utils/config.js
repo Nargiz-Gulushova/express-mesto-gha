@@ -12,6 +12,8 @@ const LIMITER_CONFIG = rateLimit({
 const STATUS_SUCCESS_CREATED = 201;
 // код дубликата от монго
 const CONFLICT_DUPLICATE_CODE = 11000;
+// 404
+const STATUS_NOT_FOUND = 404;
 
 // тексты ошибок
 const SERVER_ERROR = 'Что-то пошло не так.';
@@ -38,6 +40,7 @@ const REG_EXP_FOR_URL_VALIDATION = /(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-z
 module.exports = {
   STATUS_SUCCESS_CREATED,
   SERVER_ERROR,
+  STATUS_NOT_FOUND,
   NOT_FOUND_ERROR,
   BAD_REQUEST_ERROR,
   UNAUTH_ERROR,
