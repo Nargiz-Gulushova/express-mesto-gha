@@ -1,4 +1,6 @@
 const { CastError, ValidationError } = require('mongoose').Error;
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const User = require('../models/userSchema');
 const {
   STATUS_INTERNAL_SERVER_ERROR,
@@ -9,7 +11,14 @@ const {
   STATUS_BAD_REQUEST,
   BAD_REQUEST_ERROR,
   STATUS_SUCCESS_CREATED,
+  CONFLICT_DUPLICATE_CODE,
+  CONFLICT_DUPLICATE_ERROR,
+  TOKEN_KEY,
 } = require('../utils/config');
+const ConflictDuplicate = require('../errors/ConflictDuplicate');
+const BadRequest = require('../errors/BadRequest');
+
+const { NODE_ENV, JWT_SECRET } = process.env;
 
 function getUsers(req, res) {
   User.find({})
@@ -34,18 +43,43 @@ function getUserById(req, res) {
     });
 }
 
-function createUser(req, res) {
-  const { name, about, avatar } = req.body;
+function createUser(req, res, next) {
+  const {
+    name, about, avatar, email, password,
+  } = req.body;
 
-  User.create({ name, about, avatar })
-    .then((user) => res.status(STATUS_SUCCESS_CREATED).send({ data: user }))
+  bcrypt.hash(password, 10)
+    .then((hash) => User.create({
+      name, about, avatar, email, password: hash,
+    }))
+    .then(() => res
+      .status(STATUS_SUCCESS_CREATED)
+      .send({
+        name, about, avatar, email,
+      }))
     .catch((err) => {
-      if (err instanceof ValidationError) {
-        res.status(STATUS_BAD_REQUEST).send({ message: BAD_REQUEST_ERROR + err.message });
+      if (err.code === CONFLICT_DUPLICATE_CODE) {
+        next(new ConflictDuplicate(CONFLICT_DUPLICATE_ERROR));
+      } else if (err instanceof ValidationError) {
+        next(new BadRequest(BAD_REQUEST_ERROR));
       } else {
-        res.status(STATUS_INTERNAL_SERVER_ERROR).send({ message: SERVER_ERROR + err.message });
+        next(err);
       }
     });
+}
+
+function login(req, res, next) {
+  const { email, password } = req.body;
+  const getSecretKey = NODE_ENV === 'production' ? JWT_SECRET : 'super-strong-secret';
+
+  User.findUserByCredentials(email, password)
+    .then((user) => {
+      const token = jwt.sign({ _id: user._id }, getSecretKey, { expiresIn: '7d' });
+      res
+        .cookie(TOKEN_KEY, token, { maxAge: 3600000 * 24 * 7, httpOnly: true })
+        .send({ email });
+    })
+    .catch(next);
 }
 
 function patchUserData(req, res) {
@@ -88,4 +122,5 @@ module.exports = {
   createUser,
   patchUserData,
   patchUserAvatar,
+  login,
 };
