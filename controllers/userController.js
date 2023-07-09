@@ -43,6 +43,12 @@ function getUserById(req, res) {
     });
 }
 
+function getUserInfo(req, res, next) {
+  User.findById(req.user._id)
+    .then((user) => res.send({ data: user }))
+    .catch(next);
+}
+
 function createUser(req, res, next) {
   const {
     name, about, avatar, email, password,
@@ -119,6 +125,7 @@ function patchUserAvatar(req, res) {
 module.exports = {
   getUsers,
   getUserById,
+  getUserInfo,
   createUser,
   patchUserData,
   patchUserAvatar,
