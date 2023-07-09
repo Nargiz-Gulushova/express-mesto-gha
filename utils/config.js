@@ -10,10 +10,6 @@ const LIMITER_CONFIG = rateLimit({
 
 // статусы ошибок
 const STATUS_SUCCESS_CREATED = 201;
-const STATUS_BAD_REQUEST = 400;
-const STATUS_NOT_FOUND = 404;
-const STATUS_INTERNAL_SERVER_ERROR = 500;
-
 // код дубликата от монго
 const CONFLICT_DUPLICATE_CODE = 11000;
 
@@ -21,8 +17,8 @@ const CONFLICT_DUPLICATE_CODE = 11000;
 const SERVER_ERROR = 'Что-то пошло не так.';
 const NOT_FOUND_ERROR = 'Запрошенные данные не найдены.';
 const BAD_REQUEST_ERROR = 'Переданы некорректные данные ';
-const NOT_VALID_ID_ERROR = 'NotValidId';
 const UNAUTH_ERROR = 'Неправильные почта или пароль.';
+const TOKEN_ERROR = 'С токеном что-то не так...';
 const CONFLICT_DUPLICATE_ERROR = 'Этот email уже зарегистрирован.';
 const FORBIDDEN_ERROR = 'У вас недостаточно доступа для этого действия.';
 const VALIDATION_URL_ERROR = 'Передана некорректная ссылка.';
@@ -41,14 +37,11 @@ const REG_EXP_FOR_URL_VALIDATION = /(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-z
 
 module.exports = {
   STATUS_SUCCESS_CREATED,
-  STATUS_BAD_REQUEST,
-  STATUS_NOT_FOUND,
-  STATUS_INTERNAL_SERVER_ERROR,
   SERVER_ERROR,
   NOT_FOUND_ERROR,
   BAD_REQUEST_ERROR,
-  NOT_VALID_ID_ERROR,
   UNAUTH_ERROR,
+  TOKEN_ERROR,
   CONFLICT_DUPLICATE_ERROR,
   VALIDATION_URL_ERROR,
   VALIDATION_EMAIL_ERROR,

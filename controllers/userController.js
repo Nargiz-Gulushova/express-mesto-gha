@@ -3,12 +3,12 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/userSchema');
 const {
-  NOT_VALID_ID_ERROR,
   BAD_REQUEST_ERROR,
   STATUS_SUCCESS_CREATED,
   CONFLICT_DUPLICATE_CODE,
   CONFLICT_DUPLICATE_ERROR,
   TOKEN_KEY,
+  NOT_FOUND_ERROR,
 } = require('../utils/config');
 const ConflictDuplicate = require('../errors/ConflictDuplicate');
 const BadRequest = require('../errors/BadRequest');
@@ -24,7 +24,7 @@ function getUsers(req, res, next) {
 
 function getUserById(req, res, next) {
   User.findById(req.params.id)
-    .orFail(new NotFound(NOT_VALID_ID_ERROR))
+    .orFail(new NotFound(NOT_FOUND_ERROR))
     .then((user) => res.send({ data: user }))
     .catch(next);
 }
@@ -77,11 +77,21 @@ function login(req, res, next) {
     .catch(next);
 }
 
+function logout(req, res, next) {
+  User.findById({ _id: req.user._id })
+    .then(() => {
+      res
+        .clearCookie(TOKEN_KEY, { httpOnly: true })
+        .send({ data: 'Вы успешно вышли из аккаунта.' });
+    })
+    .catch(next);
+}
+
 function patchUserData(req, res, next) {
   const { name, about } = req.body;
 
   User.findByIdAndUpdate(req.user._id, { name, about }, { new: true, runValidators: true })
-    .orFail(new NotFound(NOT_VALID_ID_ERROR))
+    .orFail(new NotFound(NOT_FOUND_ERROR))
     .then((user) => res.send({ data: user }))
     .catch((err) => {
       if (err instanceof ValidationError) {
@@ -96,7 +106,7 @@ function patchUserAvatar(req, res, next) {
   const { avatar } = req.body;
 
   User.findByIdAndUpdate(req.user._id, { avatar }, { new: true, runValidators: true })
-    .orFail(new NotFound(NOT_VALID_ID_ERROR))
+    .orFail(new NotFound(NOT_FOUND_ERROR))
     .then((user) => res.send({ data: user }))
     .catch((err) => {
       if (err instanceof ValidationError) {
@@ -115,4 +125,5 @@ module.exports = {
   patchUserData,
   patchUserAvatar,
   login,
+  logout,
 };

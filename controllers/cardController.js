@@ -6,8 +6,8 @@ const Card = require('../models/cardSchema');
 const {
   STATUS_SUCCESS_CREATED,
   BAD_REQUEST_ERROR,
-  NOT_VALID_ID_ERROR,
   FORBIDDEN_ERROR,
+  NOT_FOUND_ERROR,
 } = require('../utils/config');
 
 function createCard(req, res, next) {
@@ -31,13 +31,10 @@ function getCards(req, res, next) {
 }
 
 function deleteCardById(req, res, next) {
-  const { cardId } = req.params;
-  const currentUserId = req.user._id;
-
-  Card.findById({ cardId })
-    .orFail(new NotFound(NOT_VALID_ID_ERROR))
+  Card.findById({ _id: req.params.cardId })
+    .orFail(new NotFound(NOT_FOUND_ERROR))
     .then((card) => {
-      if (!card.owner.equals(currentUserId)) {
+      if (!card.owner.equals(req.user._id)) {
         return next(new Forbidden(FORBIDDEN_ERROR));
       }
       return Card
@@ -53,7 +50,7 @@ function likeCard(req, res, next) {
     { $addToSet: { likes: req.user._id } }, // добавить _id в массив, если его там нет
     { new: true },
   )
-    .orFail(new NotFound(NOT_VALID_ID_ERROR))
+    .orFail(new NotFound(NOT_FOUND_ERROR))
     .then((card) => res.send({ data: card }))
     .catch(next);
 }
@@ -64,7 +61,7 @@ function dislikeCard(req, res, next) {
     { $pull: { likes: req.user._id } }, // убрать _id из массива
     { new: true },
   )
-    .orFail(new NotFound(NOT_VALID_ID_ERROR))
+    .orFail(new NotFound(NOT_FOUND_ERROR))
     .then((card) => res.send({ data: card }))
     .catch(next);
 }
